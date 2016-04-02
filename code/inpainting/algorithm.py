@@ -159,7 +159,7 @@ success, errorMessage = exampleBasedInpainting(self)
         ## Specifically: source and alpha must have the same dimesions,
         ## source much be a 3-channel uint8 image and alpha must be a 
         ## one-channel uint8 image.
-        if self._images['source'] != None and self._images['alpha'] != None:
+        if self._images['source'] is not None and self._images['alpha'] is not None:
             for x,y in zip(self._images['source'].shape, self._images['alpha'].shape):
                 if x != y:
                     return success, msg
