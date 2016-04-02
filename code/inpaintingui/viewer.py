@@ -277,7 +277,10 @@ class ImageViewer(Scatter):
 
     # COPY THE CODE YOU IMPLEMENTED IN viewer.py of A1-PartB 
     # TO THIS SPACE IN ORDER TO HANDLE MOUSE BUTTON RELEASE EVENTS
-
+    def on_touch_up_callback(self, touch):
+        if hasattr(self, 'ud'):
+            self.remove_widget(self.ud['label'])
+            self.canvas.remove_group(self.ud['group'])
 #########################################
 
 

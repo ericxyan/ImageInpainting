@@ -28,10 +28,6 @@ from debug import *
 ## PLACE YOUR CODE BETWEEN THESE LINES ##
 #########################################
 
-# If you wish to import any additional modules
-# or define other utility functions, 
-# include them here
-
             
 #########################################
 
@@ -96,8 +92,14 @@ class Inpainting:
         ## PLACE YOUR CODE BETWEEN THESE LINES ##
         #########################################
 
-        # COPY INTO THIS SPACE YOUR IMPLEMENTATION OF THIS FUNCTION
-        # FROM YOUR algorithm.py of A1-Part A
+        try:
+            self._images[key] = cv.imread(fileName, -1)
+            if self._images[key] is not None:
+                success = True
+            else:
+                msg = 'Wrong file ' + fileName
+        except IOError:
+            msg = "can\'t read file: " + fileName
 
         #########################################
         return success, msg
@@ -115,7 +117,11 @@ class Inpainting:
         #########################################
         ## PLACE YOUR CODE BETWEEN THESE LINES ##
         #########################################
-
+        try:
+            cv.imwrite(fileName, self._images[key])
+            success = True
+        except IOError:
+            msg = "can\'t write file: " + fileName
         #########################################
         return success, msg
 
@@ -153,11 +159,13 @@ success, errorMessage = exampleBasedInpainting(self)
         ## Specifically: source and alpha must have the same dimesions,
         ## source much be a 3-channel uint8 image and alpha must be a 
         ## one-channel uint8 image.
+        if self._images['source'] != None and self._images['alpha'] != None:
+            for x,y in zip(self._images['source'].shape, self._images['alpha'].shape):
+                if x != y:
+                    return success, msg
         
-        success = True
-
         #########################################
-
+        
         #
         # Handle variable/data structure initialization
         #
