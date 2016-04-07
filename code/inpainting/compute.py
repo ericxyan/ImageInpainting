@@ -124,14 +124,14 @@ def computeGradient(psiHatP=None, inpaintedImage=None, filledImage=None):
     v1 = np.array([1,2,1])
     v2 = np.array([-1,0,1])
     # Sobel filter for the x-derivative
-    sobelxcol = v1[:,np.newaxis]
-    sobelxrow = v2[np.newaxis,:]
+    sobelycol = v1[:,np.newaxis]
+    sobelyrow = v2[np.newaxis,:]
     # Sobel filter for the y-derivative
-    sobelycol = v2[:,np.newaxis]
-    sobelyrow = v1[np.newaxis,:]
+    sobelxcol = v2[:,np.newaxis]
+    sobelxrow = v1[np.newaxis,:]
 
     Dx = (sobelxrow * -1 * pixels * sobelxcol).sum()
-    Dy = (sobelycol * -1 * pixels * sobelyrow).sum()
+    Dy = -1 * (sobelycol * -1 * pixels * sobelyrow).sum()
     #########################################
     
     return Dy, Dx
@@ -177,22 +177,27 @@ def computeNormal(psiHatP=None, filledImage=None, fillFront=None):
     #########################################
     ## PLACE YOUR CODE BETWEEN THESE LINES ##
     #########################################
-    pixels, _ = copyutils.getWindow(filledImage, psiHatP._coords, 1)
+    pixels, _ = copyutils.getWindow(fillFront, psiHatP._coords, 1)
     # Sobel filter
     v1 = np.array([1,2,1])
     v2 = np.array([-1,0,1])
     # Sobel filter for the x-derivative
-    sobelxcol = v1[:,np.newaxis]
-    sobelxrow = v2[np.newaxis,:]
+    sobelycol = v1[:,np.newaxis]
+    sobelyrow = v2[np.newaxis,:]
     # Sobel filter for the y-derivative
-    sobelycol = v2[:,np.newaxis]
-    sobelyrow = v1[np.newaxis,:]
+    sobelxcol = v2[:,np.newaxis]
+    sobelxrow = v1[np.newaxis,:]
 
     Dx = (sobelxrow * -1 * pixels * sobelxcol).sum()
-    Dy = (sobelycol * -1 * pixels * sobelyrow).sum()  
+    Dy = -1 * (sobelycol * -1 * pixels * sobelyrow).sum()  
 
-    Ny = Dx
-    Nx = -1 * Dy  
+    d = np.sqrt(Dx ** 2 + Dy ** 2)
+    if d != 0:
+        Dx = Dx / d
+        Dy = Dy / d
+
+    Ny = -1 * Dx
+    Nx = Dy  
     #########################################
 
     return Ny, Nx
