@@ -73,7 +73,10 @@ def computeC(psiHatP=None, filledImage=None, confidenceImage=None):
     #########################################
     
     # Replace this dummy value with your own code
-    C = 1    
+    cwindow, _ = copyutils.getWindow(confidenceImage, psiHatP._coords, psiHatP._w)
+    filled, valid = copyutils.getWindow(filledImage, psiHatP._coords, psiHatP._w)
+    psiPArea = valid.sum()
+    C = cwindow[filled>0].sum() / psiPArea
     #########################################
     
     return C
@@ -115,8 +118,20 @@ def computeGradient(psiHatP=None, inpaintedImage=None, filledImage=None):
     #########################################
     
     # Replace these dummy values with your own code
-    Dy = 1
-    Dx = 0    
+    gray_image = cv.cvtColor(inpaintedImage, cv.COLOR_BGR2GRAY)
+    pixels, _ = copyutils.getWindow(gray_image, psiHatP._coords, 1)
+    # Sobel filter
+    v1 = np.array([1,2,1])
+    v2 = np.array([-1,0,1])
+    # Sobel filter for the x-derivative
+    sobelxcol = v1[:,np.newaxis]
+    sobelxrow = v2[np.newaxis,:]
+    # Sobel filter for the y-derivative
+    sobelycol = v2[:,np.newaxis]
+    sobelyrow = v1[np.newaxis,:]
+
+    Dx = (sobelxrow * -1 * pixels * sobelxcol).sum()
+    Dy = (sobelycol * -1 * pixels * sobelyrow).sum()
     #########################################
     
     return Dy, Dx
@@ -162,10 +177,22 @@ def computeNormal(psiHatP=None, filledImage=None, fillFront=None):
     #########################################
     ## PLACE YOUR CODE BETWEEN THESE LINES ##
     #########################################
-    
-    # Replace these dummy values with your own code
-    Ny = 0
-    Nx = 1    
+    pixels, _ = copyutils.getWindow(filledImage, psiHatP._coords, 1)
+    # Sobel filter
+    v1 = np.array([1,2,1])
+    v2 = np.array([-1,0,1])
+    # Sobel filter for the x-derivative
+    sobelxcol = v1[:,np.newaxis]
+    sobelxrow = v2[np.newaxis,:]
+    # Sobel filter for the y-derivative
+    sobelycol = v2[:,np.newaxis]
+    sobelyrow = v1[np.newaxis,:]
+
+    Dx = (sobelxrow * -1 * pixels * sobelxcol).sum()
+    Dy = (sobelycol * -1 * pixels * sobelyrow).sum()  
+
+    Ny = Dx
+    Nx = -1 * Dy  
     #########################################
 
     return Ny, Nx

@@ -96,6 +96,7 @@ class Inpainting:
             self._images[key] = cv.imread(fileName, -1)
             if self._images[key] is not None:
                 success = True
+                msg = 'Success'
             else:
                 msg = 'Wrong file ' + fileName
         except IOError:
@@ -120,6 +121,7 @@ class Inpainting:
         try:
             cv.imwrite(fileName, self._images[key])
             success = True
+            msg = 'Success'
         except IOError:
             msg = "can\'t write file: " + fileName
         #########################################
