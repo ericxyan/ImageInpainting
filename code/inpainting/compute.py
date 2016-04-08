@@ -121,22 +121,24 @@ def computeGradient(psiHatP=None, inpaintedImage=None, filledImage=None):
     #########################################
     ## PLACE YOUR CODE BETWEEN THESE LINES ##
     #########################################
-    
-    # Replace these dummy values with your own code
-    w = 3
-    inpainted, _ = copyutils.getWindow(inpaintedImage, psiHatP._coords, w)
-    filled, _ = copyutils.getWindow(filledImage, psiHatP._coords, w)
-    if len(inpainted.shape) == 3:
-        inpainted = cv.cvtColor(inpainted, cv.COLOR_BGR2GRAY)
+    kw = 1
+    sobel_size = 2 * kw + 1
+
+    inpainted, _ = copyutils.getWindow(inpaintedImage, psiHatP._coords, psiHatP._w)
+    filled, _ = copyutils.getWindow(filledImage, psiHatP._coords, psiHatP._w)
+
+    erode_kernel = np.ones((sobel_size,sobel_size),np.uint8)
+    filled_eroded = cv.erode(filled, erode_kernel, borderType=cv.BORDER_REPLICATE,iterations=1)
+    inpainted = cv.cvtColor(inpainted, cv.COLOR_BGR2GRAY)
     # Sobel filter
-    size = 2 * w + 1
-    Dx = cv.Sobel(src=inpainted, ddepth=cv.CV_32F, dx=0, dy=1, ksize=size)
-    Dy = cv.Sobel(src=inpainted, ddepth=cv.CV_32F, dx=1, dy=0, ksize=size)
-    Dx *= filled>0
-    Dy *= filled>0
+
+    Dx = -cv.Sobel(src=inpainted, ddepth=cv.CV_32F, dx=0, dy=1, ksize=sobel_size, borderType=cv.BORDER_REPLICATE)
+    Dy = cv.Sobel(src=inpainted, ddepth=cv.CV_32F, dx=1, dy=0, ksize=sobel_size, borderType=cv.BORDER_REPLICATE)
+    Dx *= filled_eroded>0
+    Dy *= filled_eroded>0
     d = np.sqrt(Dx**2 + Dy**2)
     dmax = d == d.max()
-    Dx = -Dx[dmax][0]
+    Dx = Dx[dmax][0]
     Dy = Dy[dmax][0]
     #########################################
     
@@ -183,7 +185,13 @@ def computeNormal(psiHatP=None, filledImage=None, fillFront=None):
     #########################################
     ## PLACE YOUR CODE BETWEEN THESE LINES ##
     #########################################
-    Dy, Dx = computeGradient(psiHatP, fillFront, filledImage)
+    front, _ = copyutils.getWindow(fillFront, psiHatP._coords, psiHatP._w)
+    # filled, _ = copyutils.getWindow(filledImage, psiHatP._coords, psiHatP._w)
+    # Sobel filter
+    kw = 3
+    size = 2 * kw + 1
+    Dx = -cv.Sobel(src=front, ddepth=cv.CV_32F, dx=0, dy=1, ksize=size)[kw][kw]
+    Dy = cv.Sobel(src=front, ddepth=cv.CV_32F, dx=1, dy=0, ksize=size)[kw][kw]
     d = np.sqrt(Dy**2 + Dx**2)
     if d != 0:
         Dx /= d
