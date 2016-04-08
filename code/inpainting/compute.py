@@ -34,13 +34,7 @@ import copyutils
 # implementation does not use any such packages
 
 #########################################
-def sobel(pixels, filled, w):
-    size = 2 * w + 1
-    Dx = cv.Sobel(src=pixels, ddepth=-1, dx=1, dy=0, ksize=size)
-    Dy = -1 * cv.Sobel(src=pixels, ddepth=-1, dx=0, dy=1, ksize=size)
-    Dx = Dx[filled>0].max()
-    Dy = Dy[filled>0].max()
-    return Dx, Dy
+#
 #########################################
 #
 # Computing the Patch Confidence C(p)
@@ -76,8 +70,6 @@ def computeC(psiHatP=None, filledImage=None, confidenceImage=None):
     #########################################
     ## PLACE YOUR CODE BETWEEN THESE LINES ##
     #########################################
-    
-    # Replace this dummy value with your own code
     cwindow, _ = copyutils.getWindow(confidenceImage, psiHatP._coords, psiHatP._w)
     filled, valid = copyutils.getWindow(filledImage, psiHatP._coords, psiHatP._w)
     psiPArea = valid.sum()
@@ -121,25 +113,27 @@ def computeGradient(psiHatP=None, inpaintedImage=None, filledImage=None):
     #########################################
     ## PLACE YOUR CODE BETWEEN THESE LINES ##
     #########################################
-    kw = 1
+    # Sobel filter kernel size
+    kw = 2
     sobel_size = 2 * kw + 1
-
+    # Get target patch pixels
     inpainted, _ = copyutils.getWindow(inpaintedImage, psiHatP._coords, psiHatP._w)
+    inpainted = cv.cvtColor(inpainted, cv.COLOR_BGR2GRAY)
     filled, _ = copyutils.getWindow(filledImage, psiHatP._coords, psiHatP._w)
-
+    # Using Sobel filter to calculate gradients at each pixel
+    Gx = cv.Sobel(src=inpainted, ddepth=cv.CV_32F, dx=1, dy=0, ksize=sobel_size, borderType=cv.BORDER_REPLICATE)
+    Gy = cv.Sobel(src=inpainted, ddepth=cv.CV_32F, dx=0, dy=1, ksize=sobel_size, borderType=cv.BORDER_REPLICATE)
+    # Valid gradient should be calculated from all filled pixels
     erode_kernel = np.ones((sobel_size,sobel_size),np.uint8)
     filled_eroded = cv.erode(filled, erode_kernel, borderType=cv.BORDER_REPLICATE,iterations=1)
-    inpainted = cv.cvtColor(inpainted, cv.COLOR_BGR2GRAY)
-    # Sobel filter
-
-    Dx = -cv.Sobel(src=inpainted, ddepth=cv.CV_32F, dx=0, dy=1, ksize=sobel_size, borderType=cv.BORDER_REPLICATE)
-    Dy = cv.Sobel(src=inpainted, ddepth=cv.CV_32F, dx=1, dy=0, ksize=sobel_size, borderType=cv.BORDER_REPLICATE)
-    Dx *= filled_eroded>0
-    Dy *= filled_eroded>0
-    d = np.sqrt(Dx**2 + Dy**2)
+    Gx *= filled_eroded>0
+    Gy *= filled_eroded>0
+    # Find the maximum gradient in the target patch as the patch's gradient
+    d = np.sqrt(Gx**2 + Gy**2)
     dmax = d == d.max()
-    Dx = Dx[dmax][0]
-    Dy = Dy[dmax][0]
+    # Change coordinations to kivy's display coordination
+    Dx = -Gy[dmax][0]
+    Dy = Gx[dmax][0]
     #########################################
     
     return Dy, Dx
@@ -185,19 +179,21 @@ def computeNormal(psiHatP=None, filledImage=None, fillFront=None):
     #########################################
     ## PLACE YOUR CODE BETWEEN THESE LINES ##
     #########################################
-    front, _ = copyutils.getWindow(fillFront, psiHatP._coords, psiHatP._w)
-    # filled, _ = copyutils.getWindow(filledImage, psiHatP._coords, psiHatP._w)
-    # Sobel filter
-    kw = 3
+    kw = 2
     size = 2 * kw + 1
-    Dx = -cv.Sobel(src=front, ddepth=cv.CV_32F, dx=0, dy=1, ksize=size)[kw][kw]
-    Dy = cv.Sobel(src=front, ddepth=cv.CV_32F, dx=1, dy=0, ksize=size)[kw][kw]
-    d = np.sqrt(Dy**2 + Dx**2)
+    # Get target patch's pixels in fill front image
+    front, _ = copyutils.getWindow(fillFront, psiHatP._coords, kw)
+    # Center pixel's gradient
+    Gx = cv.Sobel(src=front, ddepth=cv.CV_32F, dx=1, dy=0, ksize=size, borderType=cv.BORDER_REPLICATE)[kw][kw]
+    Gy = cv.Sobel(src=front, ddepth=cv.CV_32F, dx=0, dy=1, ksize=size, borderType=cv.BORDER_REPLICATE)[kw][kw]
+    # Change to unit vector
+    d = np.sqrt(Gy**2 + Gx**2)
     if d != 0:
-        Dx /= d
-        Dy /= d
-    Ny = -Dx
-    Nx = Dy  
+        Gx /= d
+        Gy /= d
+    # Change coordinations to kivy's display coordination
+    Ny = Gy
+    Nx = Gx
     #########################################
 
     return Ny, Nx
