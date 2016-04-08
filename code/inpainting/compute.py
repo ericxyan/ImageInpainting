@@ -131,13 +131,13 @@ def computeGradient(psiHatP=None, inpaintedImage=None, filledImage=None):
     # Sobel filter
     size = 2 * w + 1
     Dx = cv.Sobel(src=inpainted, ddepth=cv.CV_32F, dx=0, dy=1, ksize=size)
-    Dy = -cv.Sobel(src=inpainted, ddepth=cv.CV_32F, dx=1, dy=0, ksize=size)
+    Dy = cv.Sobel(src=inpainted, ddepth=cv.CV_32F, dx=1, dy=0, ksize=size)
     Dx *= filled>0
     Dy *= filled>0
     d = np.sqrt(Dx**2 + Dy**2)
     dmax = d == d.max()
     Dx = -Dx[dmax][0]
-    Dy = -Dy[dmax][0]
+    Dy = Dy[dmax][0]
     #########################################
     
     return Dy, Dx
