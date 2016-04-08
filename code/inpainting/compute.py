@@ -129,9 +129,14 @@ def computeGradient(psiHatP=None, inpaintedImage=None, filledImage=None):
     # Sobel filter for the y-derivative
     sobelxcol = v2[:,np.newaxis]
     sobelxrow = v1[np.newaxis,:]
+    sobelx = np.dot(-sobelxcol, sobelxrow)
+    sobely = np.dot(-sobelycol, sobelyrow)
 
-    Dx = (sobelxrow * -1 * pixels * sobelxcol).sum()
-    Dy = -1 * (sobelycol * -1 * pixels * sobelyrow).sum()
+    # Dx = -1 * (sobelxrow * -1 * pixels * sobelxcol).sum()
+    # Dy = (sobelycol * -1 * pixels * sobelyrow).sum()
+    Dx = -1 * (sobelx * pixels).sum()
+    Dy = (sobely * pixels).sum()
+
     #########################################
     
     return Dy, Dx
@@ -187,17 +192,21 @@ def computeNormal(psiHatP=None, filledImage=None, fillFront=None):
     # Sobel filter for the y-derivative
     sobelxcol = v2[:,np.newaxis]
     sobelxrow = v1[np.newaxis,:]
+    sobelx = np.dot(-sobelxcol, sobelxrow)
+    sobely = np.dot(-sobelycol, sobelyrow)
 
-    Dx = (sobelxrow * -1 * pixels * sobelxcol).sum()
-    Dy = -1 * (sobelycol * -1 * pixels * sobelyrow).sum()  
-
+    # Dx = -1 *(sobelxrow * -1 * pixels * sobelxcol).sum()
+    # Dy = (sobelycol * -1 * pixels * sobelyrow).sum()  
+    Dx = -1 * (sobelx * pixels).sum()
+    Dy = (sobely * pixels).sum()
+    
     d = np.sqrt(Dx ** 2 + Dy ** 2)
     if d != 0:
         Dx = Dx / d
         Dy = Dy / d
 
-    Ny = -1 * Dx
-    Nx = Dy  
+    Ny = Dx
+    Nx = -Dy  
     #########################################
 
     return Ny, Nx
