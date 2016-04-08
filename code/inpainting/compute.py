@@ -119,7 +119,7 @@ def computeGradient(psiHatP=None, inpaintedImage=None, filledImage=None):
     
     # Replace these dummy values with your own code
     gray_image = cv.cvtColor(inpaintedImage, cv.COLOR_BGR2GRAY)
-    pixels, _ = copyutils.getWindow(gray_image, psiHatP._coords, 1)
+    pixels, _ = copyutils.getWindow(gray_image, psiHatP._coords, 3)
     # Sobel filter
     v1 = np.array([1,2,1])
     v2 = np.array([-1,0,1])
@@ -132,10 +132,28 @@ def computeGradient(psiHatP=None, inpaintedImage=None, filledImage=None):
     sobelx = np.dot(-sobelxcol, sobelxrow)
     sobely = np.dot(-sobelycol, sobelyrow)
 
+    sobel7x = np.array([
+        [ 3,  4,  5,  6,  5,  4,  3],
+        [ 2,  3,  4,  5,  4,  3,  2],
+        [ 1,  2,  3,  4,  3,  2,  1],
+        [ 0,  0,  0,  0,  0,  0,  0],
+        [-1, -2, -3, -4, -3, -2, -1],
+        [-2, -3, -4, -5, -4, -3, -2],
+        [-3, -4, -5, -6, -5, -4, -3]])
+
+    sobel7y = np.array([
+        [ 3,  2,  1,  0, -1, -2, -3],
+        [ 4,  3,  2,  0, -2, -3, -4],
+        [ 5,  4,  3,  0, -3, -4, -5],
+        [ 6,  5,  4,  0, -4, -5, -6],
+        [ 5,  4,  3,  0, -3, -4, -5],
+        [ 4,  3,  2,  0, -2, -3, -4],
+        [ 3,  2,  1,  0, -1, -2, -3]])
+
     # Dx = -1 * (sobelxrow * -1 * pixels * sobelxcol).sum()
     # Dy = (sobelycol * -1 * pixels * sobelyrow).sum()
-    Dx = -1 * (sobelx * pixels).sum()
-    Dy = (sobely * pixels).sum()
+    Dx = -1 * (sobel7x * pixels).sum()
+    Dy = (sobel7y * pixels).sum()
 
     #########################################
     
@@ -182,7 +200,7 @@ def computeNormal(psiHatP=None, filledImage=None, fillFront=None):
     #########################################
     ## PLACE YOUR CODE BETWEEN THESE LINES ##
     #########################################
-    pixels, _ = copyutils.getWindow(fillFront, psiHatP._coords, 1)
+    pixels, _ = copyutils.getWindow(fillFront, psiHatP._coords, 3)
     # Sobel filter
     v1 = np.array([1,2,1])
     v2 = np.array([-1,0,1])
@@ -195,11 +213,29 @@ def computeNormal(psiHatP=None, filledImage=None, fillFront=None):
     sobelx = np.dot(-sobelxcol, sobelxrow)
     sobely = np.dot(-sobelycol, sobelyrow)
 
-    # Dx = -1 *(sobelxrow * -1 * pixels * sobelxcol).sum()
-    # Dy = (sobelycol * -1 * pixels * sobelyrow).sum()  
-    Dx = -1 * (sobelx * pixels).sum()
-    Dy = (sobely * pixels).sum()
-    
+    sobel7x = np.array([
+        [ 3,  4,  5,  6,  5,  4,  3],
+        [ 2,  3,  4,  5,  4,  3,  2],
+        [ 1,  2,  3,  4,  3,  2,  1],
+        [ 0,  0,  0,  0,  0,  0,  0],
+        [-1, -2, -3, -4, -3, -2, -1],
+        [-2, -3, -4, -5, -4, -3, -2],
+        [-3, -4, -5, -6, -5, -4, -3]])
+
+    sobel7y = np.array([
+        [ 3,  2,  1,  0, -1, -2, -3],
+        [ 4,  3,  2,  0, -2, -3, -4],
+        [ 5,  4,  3,  0, -3, -4, -5],
+        [ 6,  5,  4,  0, -4, -5, -6],
+        [ 5,  4,  3,  0, -3, -4, -5],
+        [ 4,  3,  2,  0, -2, -3, -4],
+        [ 3,  2,  1,  0, -1, -2, -3]])
+
+    # Dx = -1 * (sobelxrow * -1 * pixels * sobelxcol).sum()
+    # Dy = (sobelycol * -1 * pixels * sobelyrow).sum()
+    Dx = -1 * (sobel7x * pixels).sum()
+    Dy = (sobel7y * pixels).sum()
+
     d = np.sqrt(Dx ** 2 + Dy ** 2)
     if d != 0:
         Dx = Dx / d
