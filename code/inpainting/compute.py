@@ -179,7 +179,7 @@ def computeNormal(psiHatP=None, filledImage=None, fillFront=None):
     #########################################
     ## PLACE YOUR CODE BETWEEN THESE LINES ##
     #########################################
-    kw = 2
+    kw = 4
     size = 2 * kw + 1
     # Get target patch's pixels in fill front image
     front, _ = copyutils.getWindow(fillFront, psiHatP._coords, kw)
@@ -191,7 +191,7 @@ def computeNormal(psiHatP=None, filledImage=None, fillFront=None):
     if d != 0:
         Gx /= d
         Gy /= d
-    # Change coordinations to kivy's display coordination
+    #  Change coordinations to kivy's display coordination
     Ny = Gy
     Nx = Gx
     #########################################
