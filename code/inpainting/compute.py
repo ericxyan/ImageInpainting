@@ -34,47 +34,12 @@ import copyutils
 # implementation does not use any such packages
 
 #########################################
-def sobel(pixels, w):
-    # Sobel filter 3x3
-    v1 = np.array([1,2,1])
-    v2 = np.array([-1,0,1])
-    # Sobel filter for the x-derivative
-    sobelycol = v1[:,np.newaxis]
-    sobelyrow = v2[np.newaxis,:]
-    # Sobel filter for the y-derivative
-    sobelxcol = v2[:,np.newaxis]
-    sobelxrow = v1[np.newaxis,:]
-    sobel3x = np.dot(-sobelxcol, sobelxrow)
-    sobel3y = np.dot(-sobelycol, sobelyrow)
-
-    # Sobel filter 7x7
-    sobel7x = np.array([
-        [ 3,  4,  5,  6,  5,  4,  3],
-        [ 2,  3,  4,  5,  4,  3,  2],
-        [ 1,  2,  3,  4,  3,  2,  1],
-        [ 0,  0,  0,  0,  0,  0,  0],
-        [-1, -2, -3, -4, -3, -2, -1],
-        [-2, -3, -4, -5, -4, -3, -2],
-        [-3, -4, -5, -6, -5, -4, -3]])
-    sobel7y = np.array([
-        [ 3,  2,  1,  0, -1, -2, -3],
-        [ 4,  3,  2,  0, -2, -3, -4],
-        [ 5,  4,  3,  0, -3, -4, -5],
-        [ 6,  5,  4,  0, -4, -5, -6],
-        [ 5,  4,  3,  0, -3, -4, -5],
-        [ 4,  3,  2,  0, -2, -3, -4],
-        [ 3,  2,  1,  0, -1, -2, -3]])
-    # Default 7x7
-    sobelx = sobel7x
-    sobely = sobel7y
-
-    if w == 1:
-        sobelx = sobel3x
-        sobely = sobel3y
-
-    Dx = -1 * (sobelx * pixels).sum()
-    Dy = (sobely * pixels).sum()
-
+def sobel(pixels, filled, w):
+    size = 2 * w + 1
+    Dx = cv.Sobel(src=pixels, ddepth=-1, dx=1, dy=0, ksize=size)
+    Dy = -1 * cv.Sobel(src=pixels, ddepth=-1, dx=0, dy=1, ksize=size)
+    Dx = Dx[filled>0].max()
+    Dy = Dy[filled>0].max()
     return Dx, Dy
 #########################################
 #
@@ -159,11 +124,20 @@ def computeGradient(psiHatP=None, inpaintedImage=None, filledImage=None):
     
     # Replace these dummy values with your own code
     w = 3
-    gray_image = cv.cvtColor(inpaintedImage, cv.COLOR_BGR2GRAY)
-    pixels, _ = copyutils.getWindow(gray_image, psiHatP._coords, w)
+    inpainted, _ = copyutils.getWindow(inpaintedImage, psiHatP._coords, w)
+    filled, _ = copyutils.getWindow(filledImage, psiHatP._coords, w)
+    if len(inpainted.shape) == 3:
+        inpainted = cv.cvtColor(inpainted, cv.COLOR_BGR2GRAY)
     # Sobel filter
-    Dx, Dy = sobel(pixels, w)
-
+    size = 2 * w + 1
+    Dx = cv.Sobel(src=inpainted, ddepth=cv.CV_32F, dx=0, dy=1, ksize=size)
+    Dy = -cv.Sobel(src=inpainted, ddepth=cv.CV_32F, dx=1, dy=0, ksize=size)
+    Dx *= filled>0
+    Dy *= filled>0
+    d = np.sqrt(Dx**2 + Dy**2)
+    dmax = d == d.max()
+    Dx = -Dx[dmax][0]
+    Dy = -Dy[dmax][0]
     #########################################
     
     return Dy, Dx
@@ -209,18 +183,13 @@ def computeNormal(psiHatP=None, filledImage=None, fillFront=None):
     #########################################
     ## PLACE YOUR CODE BETWEEN THESE LINES ##
     #########################################
-    w = 3
-    pixels, _ = copyutils.getWindow(fillFront, psiHatP._coords, w)
-    # Sobel filter
-    Dx, Dy = sobel(pixels, w)
-
-    d = np.sqrt(Dx ** 2 + Dy ** 2)
+    Dy, Dx = computeGradient(psiHatP, fillFront, filledImage)
+    d = np.sqrt(Dy**2 + Dx**2)
     if d != 0:
-        Dx = Dx / d
-        Dy = Dy / d
-
-    Ny = Dx
-    Nx = -Dy  
+        Dx /= d
+        Dy /= d
+    Ny = -Dx
+    Nx = Dy  
     #########################################
 
     return Ny, Nx
