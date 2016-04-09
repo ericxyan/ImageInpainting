@@ -114,15 +114,15 @@ def computeGradient(psiHatP=None, inpaintedImage=None, filledImage=None):
     ## PLACE YOUR CODE BETWEEN THESE LINES ##
     #########################################
     # Sobel filter kernel size
-    kw = 2
+    kw = 1
     sobel_size = 2 * kw + 1
     # Get target patch pixels
     inpainted, _ = copyutils.getWindow(inpaintedImage, psiHatP._coords, psiHatP._w)
     inpainted = cv.cvtColor(inpainted, cv.COLOR_BGR2GRAY)
     filled, _ = copyutils.getWindow(filledImage, psiHatP._coords, psiHatP._w)
-    # Using Sobel filter to calculate gradients at each pixel
-    Gx = cv.Sobel(src=inpainted, ddepth=cv.CV_32F, dx=1, dy=0, ksize=sobel_size, borderType=cv.BORDER_REPLICATE)
-    Gy = cv.Sobel(src=inpainted, ddepth=cv.CV_32F, dx=0, dy=1, ksize=sobel_size, borderType=cv.BORDER_REPLICATE)
+    # Using Sobel/Scharr filter to calculate gradients at each pixel
+    Gx = cv.Scharr(src=inpainted, ddepth=cv.CV_32F, dx=1, dy=0, borderType=cv.BORDER_REPLICATE)
+    Gy = cv.Scharr(src=inpainted, ddepth=cv.CV_32F, dx=0, dy=1, borderType=cv.BORDER_REPLICATE)
     # Valid gradient should be calculated from all filled pixels
     erode_kernel = np.ones((sobel_size,sobel_size),np.uint8)
     filled_eroded = cv.erode(filled, erode_kernel, borderType=cv.BORDER_REPLICATE,iterations=1)
@@ -179,13 +179,13 @@ def computeNormal(psiHatP=None, filledImage=None, fillFront=None):
     #########################################
     ## PLACE YOUR CODE BETWEEN THESE LINES ##
     #########################################
-    kw = 4
+    kw = 1
     size = 2 * kw + 1
     # Get target patch's pixels in fill front image
     front, _ = copyutils.getWindow(fillFront, psiHatP._coords, kw)
     # Center pixel's gradient
-    Gx = cv.Sobel(src=front, ddepth=cv.CV_32F, dx=1, dy=0, ksize=size, borderType=cv.BORDER_REPLICATE)[kw][kw]
-    Gy = cv.Sobel(src=front, ddepth=cv.CV_32F, dx=0, dy=1, ksize=size, borderType=cv.BORDER_REPLICATE)[kw][kw]
+    Gx = cv.Scharr(src=front, ddepth=cv.CV_32F, dx=1, dy=0, borderType=cv.BORDER_REPLICATE)[kw][kw]
+    Gy = cv.Scharr(src=front, ddepth=cv.CV_32F, dx=0, dy=1, borderType=cv.BORDER_REPLICATE)[kw][kw]
     # Change to unit vector
     d = np.sqrt(Gy**2 + Gx**2)
     if d != 0:
